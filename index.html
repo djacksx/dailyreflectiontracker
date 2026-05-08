@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reflection Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: #F4F1EA;
+    padding: 32px 20px;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #1A1A1A;
+    -webkit-font-smoothing: antialiased;
+  }
+  .display-font { font-family: 'Fraunces', Georgia, serif; }
+  .mono-font { font-family: 'JetBrains Mono', monospace; }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  .header { margin-bottom: 32px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #8B6914;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  h1 em { font-weight: 400; }
+  .intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4A4538;
+    max-width: 560px;
+  }
+
+  .summary {
+    background: #1A1A1A;
+    color: #F4F1EA;
+    padding: 20px 24px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .summary-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    opacity: 0.6;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .summary-value {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 42px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .summary-value .denom { font-size: 16px; opacity: 0.5; margin-left: 6px; }
+  .reset-btn {
+    background: transparent;
+    color: #F4F1EA;
+    border: 1px solid #4A4538;
+    padding: 8px 14px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .question-card {
+    background: #FAF8F2;
+    border: 1px solid #D4CFC0;
+    border-radius: 2px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+  .q-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: #8B6914;
+    text-transform: uppercase;
+  }
+  .q-avg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #6B6558;
+  }
+  .q-avg span {
+    color: #1A1A1A;
+    font-weight: 600;
+  }
+  .q-text {
+    font-size: 15px;
+    line-height: 1.45;
+    margin-bottom: 18px;
+    color: #1A1A1A;
+    font-style: italic;
+  }
+
+  .day-row {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+  }
+  .day-cell {
+    flex: 1;
+    min-width: 28px;
+    position: relative;
+  }
+  .day-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #6B6558;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .score-btn {
+    width: 100%;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #D4CFC0;
+    background: #FAF8F2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B6558;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-btn:hover {
+    background: #1A1A1A;
+    color: #F4F1EA;
+    border-color: #1A1A1A;
+  }
+  .score-btn.selected {
+    background: #1A1A1A;
+    color: #F4F1EA;
+    border-color: #1A1A1A;
+  }
+  .score-btn.selected.high { background: #2D5016; border-color: #2D5016; }
+  .score-btn.selected.mid { background: #8B6914; border-color: #8B6914; }
+  .score-btn.selected.low { background: #7A2E1F; border-color: #7A2E1F; }
+
+  .picker {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #FAF8F2;
+    border: 1px solid #1A1A1A;
+    border-radius: 2px;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    width: 180px;
+  }
+  .picker .score-btn { width: 28px; height: 28px; }
+  .picker-clear {
+    grid-column: span 5;
+    color: #7A2E1F;
+  }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+  }
+
+  .totals {
+    background: #FAF8F2;
+    border: 1px solid #D4CFC0;
+    padding: 20px;
+    margin-top: 8px;
+  }
+  .totals-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: #8B6914;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #6B6558;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 4px;
+    border-bottom: 1px solid #D4CFC0;
+  }
+  th.left { text-align: left; }
+  th.right { text-align: right; }
+  td {
+    padding: 10px 4px;
+    border-bottom: 1px solid #E8E3D5;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.day {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  td.stat {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1A1A1A;
+  }
+
+  .email-section {
+    margin-top: 24px;
+    padding: 28px 24px;
+    background: #FAF8F2;
+    border: 1px solid #D4CFC0;
+    text-align: center;
+  }
+  .email-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: #8B6914;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .email-description {
+    font-size: 13px;
+    color: #4A4538;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .email-btn {
+    background: #1A1A1A;
+    color: #F4F1EA;
+    border: none;
+    padding: 12px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: opacity 0.15s ease;
+  }
+  .email-btn:hover { opacity: 0.85; }
+  .email-btn:disabled {
+    background: #8B8472;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .email-recipient {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #6B6558;
+    margin-top: 14px;
+  }
+
+  .save-status {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 10px;
+    color: #8B8472;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    height: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 640px) {
+    .question-card { padding: 16px; }
+    .score-btn { font-size: 10px; }
+    h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="eyebrow">Active Self-Questions · Week Tracker</div>
+    <h1>Did I do my best<br><em>today?</em></h1>
+    <p class="intro">Rate each question 1 to 10 at the end of the day. Effort, not outcome. Trends matter more than any single score.</p>
+  </div>
+
+  <div class="summary">
+    <div>
+      <div class="summary-label">Weekly Average</div>
+      <div class="summary-value" id="weekAvg">—<span class="denom">/ 10</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetWeek()">Reset week</button>
+  </div>
+
+  <div id="questions"></div>
+
+  <div class="totals">
+    <div class="totals-label">Daily Totals & Averages</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="left">Day</th>
+          <th class="right">Total / 60</th>
+          <th class="right">Avg</th>
+        </tr>
+      </thead>
+      <tbody id="totalsBody"></tbody>
+    </table>
+  </div>
+
+  <div class="email-section">
+    <div class="email-label">End of week</div>
+    <div class="email-description">Send this week's scores, daily averages, and per-question averages to yourself for reflection or to share with a coach.</div>
+    <button class="email-btn" id="emailBtn" onclick="emailResults()">Email weekly results</button>
+    <div class="email-recipient">to danielle.klarman@gmail.com</div>
+  </div>
+
+  <div class="save-status" id="saveStatus">Auto-saves as you go</div>
+</div>
+
+<script>
+  const QUESTIONS = [
+    { id: 1, derailer: "Leisurely", text: "Did I do my best to surface my real disagreement in the moment rather than nodding along and quietly working around it?" },
+    { id: 2, derailer: "Reserved", text: "Did I do my best to ask a colleague how they were doing, and actually listen, before jumping to the work?" },
+    { id: 3, derailer: "Bold + Skeptical", text: "Did I do my best to invite challenge to my point of view and treat it as data rather than threat?" },
+    { id: 4, derailer: "Bold", text: "Did I do my best to acknowledge a mistake or a gap in my thinking out loud today?" },
+    { id: 5, derailer: "Imaginative", text: "Did I do my best to translate a complex or abstract idea into language my audience could actually use?" },
+    { id: 6, derailer: "Diligent", text: "Did I do my best to trust someone else's work without rewriting or overcorrecting it?" }
+  ];
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const STORAGE_KEY = "reflection-tracker-v1";
+  const RECIPIENT = "danielle.klarman@gmail.com";
+
+  let scores = QUESTIONS.map(() => DAYS.map(() => null));
+  let openPicker = null;
+
+  function load() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) scores = JSON.parse(saved);
+    } catch (e) {}
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+      const el = document.getElementById("saveStatus");
+      el.textContent = "✓ Saved";
+      setTimeout(() => { el.textContent = "Auto-saves as you go"; }, 1500);
+    } catch (e) {
+      document.getElementById("saveStatus").textContent = "Could not save";
+    }
+  }
+
+  function colorClass(n) {
+    if (n >= 8) return "high";
+    if (n >= 5) return "mid";
+    return "low";
+  }
+
+  function fmt(n) {
+    return n === null ? "—" : n.toFixed(1);
+  }
+
+  function dayTotal(dIdx) {
+    const vals = scores.map(row => row[dIdx]).filter(v => v !== null);
+    if (vals.length === 0) return null;
+    return vals.reduce((a, b) => a + b, 0);
+  }
+
+  function dayAverage(dIdx) {
+    const vals = scores.map(row => row[dIdx]).filter(v => v !== null);
+    if (vals.length === 0) return null;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }
+
+  function questionAverage(qIdx) {
+    const vals = scores[qIdx].filter(v => v !== null);
+    if (vals.length === 0) return null;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }
+
+  function weekAverage() {
+    const all = scores.flat().filter(v => v !== null);
+    if (all.length === 0) return null;
+    return all.reduce((a, b) => a + b, 0) / all.length;
+  }
+
+  function setScore(qIdx, dIdx, value) {
+    scores[qIdx][dIdx] = value;
+    save();
+    render();
+  }
+
+  function resetWeek() {
+    if (!confirm("Clear all scores for this week?")) return;
+    scores = QUESTIONS.map(() => DAYS.map(() => null));
+    save();
+    render();
+  }
+
+  function togglePicker(qIdx, dIdx) {
+    const key = qIdx + "-" + dIdx;
+    openPicker = openPicker === key ? null : key;
+    render();
+  }
+
+  function closePicker() {
+    openPicker = null;
+    render();
+  }
+
+  function emailResults() {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const weekVal = weekAverage();
+
+    const subject = "Weekly reflection results · " + dateStr;
+
+    let body = "REFLECTION TRACKER · WEEKLY RESULTS\n";
+    body += "Generated " + dateStr + "\n";
+    body += "============================================\n\n";
+
+    body += "WEEKLY AVERAGE: " + fmt(weekVal) + " / 10\n\n";
+
+    body += "--------------------------------------------\n";
+    body += "QUESTIONS & SCORES\n";
+    body += "--------------------------------------------\n\n";
+
+    QUESTIONS.forEach((q, qIdx) => {
+      body += "Q" + q.id + " · " + q.derailer + " · avg " + fmt(questionAverage(qIdx)) + "\n";
+      body += q.text + "\n";
+      const row = DAYS.map((d, dIdx) => {
+        const v = scores[qIdx][dIdx];
+        return d + ": " + (v === null ? "—" : v);
+      }).join("  |  ");
+      body += row + "\n\n";
+    });
+
+    body += "--------------------------------------------\n";
+    body += "DAILY TOTALS & AVERAGES\n";
+    body += "--------------------------------------------\n\n";
+
+    DAYS.forEach((d, dIdx) => {
+      const total = dayTotal(dIdx);
+      body += d + "  ·  Total: " + (total === null ? "—" : total + "/60") + "  ·  Avg: " + fmt(dayAverage(dIdx)) + "\n";
+    });
+
+    body += "\n--------------------------------------------\n";
+    body += "REFLECTION PROMPTS\n";
+    body += "--------------------------------------------\n\n";
+    body += "Which question scored lowest this week? What got in the way?\n\n";
+    body += "Which question's score surprised you most?\n\n";
+    body += "What is one behavioural experiment you could try next week based on this data?\n";
+
+    const mailto = "mailto:" + RECIPIENT + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    window.location.href = mailto;
+  }
+
+  function render() {
+    const weekVal = weekAverage();
+    document.getElementById("weekAvg").innerHTML = (weekVal === null ? "—" : weekVal.toFixed(1)) + '<span class="denom">/ 10</span>';
+
+    const qContainer = document.getElementById("questions");
+    qContainer.innerHTML = QUESTIONS.map((q, qIdx) => `
+      <div class="question-card">
+        <div class="q-header">
+          <div class="q-meta">Q${q.id} · ${q.derailer}</div>
+          <div class="q-avg">avg <span>${fmt(questionAverage(qIdx))}</span></div>
+        </div>
+        <p class="q-text">${q.text}</p>
+        <div class="day-row" style="margin-bottom: 6px;">
+          ${DAYS.map(d => `<div class="day-cell"><div class="day-label">${d}</div></div>`).join("")}
+        </div>
+        <div class="day-row">
+          ${DAYS.map((d, dIdx) => {
+            const val = scores[qIdx][dIdx];
+            const isOpen = openPicker === (qIdx + "-" + dIdx);
+            const cls = val !== null ? "selected " + colorClass(val) : "";
+            return `
+              <div class="day-cell">
+                <button class="score-btn ${cls}" onclick="event.stopPropagation(); togglePicker(${qIdx}, ${dIdx})">
+                  ${val === null ? "·" : val}
+                </button>
+                ${isOpen ? `
+                  <div class="overlay" onclick="closePicker()"></div>
+                  <div class="picker">
+                    ${[1,2,3,4,5,6,7,8,9,10].map(n => {
+                      const sel = val === n ? "selected " + colorClass(n) : "";
+                      return `<button class="score-btn ${sel}" onclick="event.stopPropagation(); setScore(${qIdx}, ${dIdx}, ${n})">${n}</button>`;
+                    }).join("")}
+                    ${val !== null ? `<button class="score-btn picker-clear" onclick="event.stopPropagation(); setScore(${qIdx}, ${dIdx}, null)">Clear</button>` : ""}
+                  </div>
+                ` : ""}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `).join("");
+
+    document.getElementById("totalsBody").innerHTML = DAYS.map((d, dIdx) => {
+      const total = dayTotal(dIdx);
+      return `
+        <tr>
+          <td class="day">${d}</td>
+          <td class="stat">${total === null ? "—" : total}</td>
+          <td class="stat">${fmt(dayAverage(dIdx))}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const allEmpty = scores.flat().every(v => v === null);
+    document.getElementById("emailBtn").disabled = allEmpty;
+  }
+
+  load();
+  render();
+</script>
+</body>
+</html>
